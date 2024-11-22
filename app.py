@@ -60,37 +60,31 @@ if pages == "Options":
         st.success(f"Selected camera index: {st.session_state.camera_index}")
 
 if pages == "Main":
-    st.header("Barcode Scanner")
-
     if st.session_state.camera_index is None:
         st.warning("Please select a camera in the Options page.")
     else:
-        run = st.checkbox('Run Scanner', key='run_scanner')
         FRAME_WINDOW = st.image([])
         barcode_text = st.empty()
-        if run:
-            cap = cv2.VideoCapture(st.session_state.camera_index)
-            while run:
-                ret, frame = cap.read()
-                if not ret:
-                    st.error(f"Failed to capture image from camera {st.session_state.camera_index}.")
-                    break
 
-                # Define crop dimensions (e.g., 50% of original width/height)
-                crop_width = frame.shape[1] // 3
-                crop_height = frame.shape[0] // 3
+        cap = cv2.VideoCapture(st.session_state.camera_index)
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                st.error(f"Failed to capture image from camera {st.session_state.camera_index}.")
+                break
 
-                # Crop to center
-                frame_cropped = crop_center(frame, crop_width, crop_height)
+            # Define crop dimensions (e.g., 50% of original width/height)
+            crop_width = frame.shape[1] // 3
+            crop_height = frame.shape[0] // 3
 
-                # Detect barcode within the cropped frame
-                frame_cropped = detect_barcode(frame_cropped)
+            # Crop to center
+            frame_cropped = crop_center(frame, crop_width, crop_height)
 
-                # Convert to RGB for Streamlit display
-                frame_cropped = cv2.cvtColor(frame_cropped, cv2.COLOR_BGR2RGB)
-                FRAME_WINDOW.image(frame_cropped)
+            # Detect barcode within the cropped frame
+            frame_cropped = detect_barcode(frame_cropped)
 
-                if not st.session_state.run_scanner:
-                    break
+            # Convert to RGB for Streamlit display
+            frame_cropped = cv2.cvtColor(frame_cropped, cv2.COLOR_BGR2RGB)
+            FRAME_WINDOW.image(frame_cropped)
 
-            cap.release()
+        cap.release()
