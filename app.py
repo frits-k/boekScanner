@@ -6,42 +6,14 @@ import pandas as pd
 
 
 def get_book_details(isbn):
-    """
-    Fetches book details from the Google Books API using the provided ISBN.
-
-    Args:
-        isbn (str): The ISBN code of the book to look up.
-
-    Returns:
-        dict: A dictionary containing the book details, or None if no book is found.
-    """
-    # Base URL for Google Books API
     url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}"
-
     try:
-        # Fetch response from the API
         response = requests.get(url)
-        response.raise_for_status()  # Raise an exception for HTTP errors
+        response.raise_for_status()
         results = response.json()
-
-        # Check if the ISBN returns any results
         if results.get("totalItems", 0) > 0:
-            book = results["items"][0]  # Get the first (and only) result
-
-            # Extract book details
+            book = results["items"][0]
             volume_info = book.get("volumeInfo", {})
-            access_info = book.get("accessInfo", {})
-
-            title = volume_info.get("title", "N/A")
-            subtitle = volume_info.get("subtitle", "N/A")
-            authors = volume_info.get("authors", [])
-            print_type = volume_info.get("printType", "N/A")
-            page_count = volume_info.get("pageCount", "N/A")
-            publisher = volume_info.get("publisher", "N/A")
-            published_date = volume_info.get("publishedDate", "N/A")
-            web_reader_link = access_info.get("webReaderLink", "N/A")
-
-            # Compile book details into a dictionary
             book_details = {
                 "title": volume_info.get("title", "N/A"),
                 "subtitle": volume_info.get("subtitle", "N/A"),
@@ -57,7 +29,6 @@ def get_book_details(isbn):
                 "pageCount": volume_info.get("pageCount", "N/A"),
                 "language": volume_info.get("language", "N/A"),
             }
-
             return book_details
         else:
             print("No book found for the given ISBN.")
@@ -94,32 +65,27 @@ def detect_barcode(frame):
         barcode_data = barcode.data.decode("utf-8")
         if barcode_data.startswith("978") or barcode_data.startswith("979"):
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            barcode_type = barcode.type
-            text = f"{barcode_data} ({barcode_type})"
+            text = f"{barcode_data} ({barcode.type})"
             cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             book_details = get_book_details(barcode_data)
-            book_df = pd.DataFrame(list(book_details.items()), columns=["Field", "Value"])
-            st.session_state.book_table.table(book_df)
+            if book_details:
+                book_df = pd.DataFrame(list(book_details.items()), columns=["Field", "Value"])
+                st.session_state.book_table.dataframe(book_df.set_index(book_df.columns[0]))
     return frame
 
 
-# Initialize session state variables
 if "camera_index" not in st.session_state:
     st.session_state.camera_index = 0
 if "book_table" not in st.session_state:
     st.session_state.book_table = st.empty()
 
 pages = st.sidebar.radio("Navigation", ["Main", "Options"])
-
 if pages == "Options":
     st.header("Camera Options")
-
-    # Get available cameras
     available_cameras = get_available_cameras()
     if not available_cameras:
         st.error("No camera devices found.")
     else:
-        # Save the selected camera index in session state
         st.session_state.camera_index = st.selectbox(
             'Select Camera',
             available_cameras,
@@ -132,27 +98,16 @@ if pages == "Main":
         st.warning("Please select a camera in the Options page.")
     else:
         FRAME_WINDOW = st.image([])
-        barcode_text = st.empty()
-
         cap = cv2.VideoCapture(st.session_state.camera_index)
-        while True:
+        while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 st.error(f"Failed to capture image from camera {st.session_state.camera_index}.")
                 break
-
-            # Define crop dimensions (e.g., 50% of original width/height)
             crop_width = frame.shape[1] // 3
             crop_height = frame.shape[0] // 3
-
-            # Crop to center
             frame_cropped = crop_center(frame, crop_width, crop_height)
-
-            # Detect barcode within the cropped frame
             frame_cropped = detect_barcode(frame_cropped)
-
-            # Convert to RGB for Streamlit display
             frame_cropped = cv2.cvtColor(frame_cropped, cv2.COLOR_BGR2RGB)
             FRAME_WINDOW.image(frame_cropped)
-
         cap.release()
