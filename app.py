@@ -2,7 +2,6 @@ import cv2
 import streamlit as st
 from pyzbar.pyzbar import decode
 import requests
-import pandas as pd
 
 
 def get_book_details(isbn):
@@ -15,19 +14,19 @@ def get_book_details(isbn):
             book = results["items"][0]
             volume_info = book.get("volumeInfo", {})
             book_details = {
-                "title": volume_info.get("title", "N/A"),
-                "subtitle": volume_info.get("subtitle", "N/A"),
-                "author": ", ".join(volume_info.get("authors", ["Unknown"])),
-                "publishedDate": volume_info.get("publishedDate", "N/A"),
-                "description": volume_info.get("description", "N/A"),
-                "isbn_10": next(
+                "TITEL": volume_info.get("title", "N/A"),
+                "ONDERKOP": volume_info.get("subtitle", "N/A"),
+                "AUTEUR": ", ".join(volume_info.get("authors", ["Unknown"])),
+                "PUBLICATIEDATUM": volume_info.get("publishedDate", "N/A"),
+                "BESCHRIJVING": volume_info.get("description", "N/A"),
+                "ISBN_10": next(
                     (id["identifier"] for id in volume_info.get("industryIdentifiers", []) if id["type"] == "ISBN_10"),
                     "N/A"),
-                "isbn_13": next(
+                "ISBN_13": next(
                     (id["identifier"] for id in volume_info.get("industryIdentifiers", []) if id["type"] == "ISBN_13"),
                     "N/A"),
-                "pageCount": volume_info.get("pageCount", "N/A"),
-                "language": volume_info.get("language", "N/A"),
+                "AANTAL_PAGINA'S": volume_info.get("pageCount", "N/A"),
+                "TAAL": volume_info.get("language", "N/A"),
             }
             return book_details
         else:
@@ -69,8 +68,11 @@ def detect_barcode(frame):
             cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             book_details = get_book_details(barcode_data)
             if book_details:
-                book_df = pd.DataFrame(list(book_details.items()), columns=["Field", "Value"])
-                st.session_state.book_table.dataframe(book_df.set_index(book_df.columns[0]))
+                table_html = "<table>"
+                for key, value in book_details.items():
+                    table_html += f"<tr><td><b>{key}</b></td><td>{value}</td></tr>"
+                table_html += "</table>"
+                st.session_state.book_table.markdown(table_html, unsafe_allow_html=True)
     return frame
 
 
