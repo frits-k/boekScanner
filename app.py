@@ -2,6 +2,7 @@ import cv2
 import streamlit as st
 from pyzbar.pyzbar import decode
 import requests
+import pandas as pd
 
 
 def get_book_details(isbn):
@@ -97,13 +98,16 @@ def detect_barcode(frame):
             text = f"{barcode_data} ({barcode_type})"
             cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             book_details = get_book_details(barcode_data)
-            barcode_text.write(f"Detected Book: {book_details}")
+            book_df = pd.DataFrame(list(book_details.items()), columns=["Field", "Value"])
+            st.session_state.book_table.table(book_df)
     return frame
 
 
 # Initialize session state variables
 if "camera_index" not in st.session_state:
     st.session_state.camera_index = 0
+if "book_table" not in st.session_state:
+    st.session_state.book_table = st.empty()
 
 pages = st.sidebar.radio("Navigation", ["Main", "Options"])
 
