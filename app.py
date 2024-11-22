@@ -1,6 +1,69 @@
 import cv2
 import streamlit as st
 from pyzbar.pyzbar import decode
+import requests
+
+
+def get_book_details(isbn):
+    """
+    Fetches book details from the Google Books API using the provided ISBN.
+
+    Args:
+        isbn (str): The ISBN code of the book to look up.
+
+    Returns:
+        dict: A dictionary containing the book details, or None if no book is found.
+    """
+    # Base URL for Google Books API
+    url = f"https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}"
+
+    try:
+        # Fetch response from the API
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        results = response.json()
+
+        # Check if the ISBN returns any results
+        if results.get("totalItems", 0) > 0:
+            book = results["items"][0]  # Get the first (and only) result
+
+            # Extract book details
+            volume_info = book.get("volumeInfo", {})
+            access_info = book.get("accessInfo", {})
+
+            title = volume_info.get("title", "N/A")
+            subtitle = volume_info.get("subtitle", "N/A")
+            authors = volume_info.get("authors", [])
+            print_type = volume_info.get("printType", "N/A")
+            page_count = volume_info.get("pageCount", "N/A")
+            publisher = volume_info.get("publisher", "N/A")
+            published_date = volume_info.get("publishedDate", "N/A")
+            web_reader_link = access_info.get("webReaderLink", "N/A")
+
+            # Compile book details into a dictionary
+            book_details = {
+                "title": volume_info.get("title", "N/A"),
+                "subtitle": volume_info.get("subtitle", "N/A"),
+                "author": ", ".join(volume_info.get("authors", ["Unknown"])),
+                "publishedDate": volume_info.get("publishedDate", "N/A"),
+                "description": volume_info.get("description", "N/A"),
+                "isbn_10": next(
+                    (id["identifier"] for id in volume_info.get("industryIdentifiers", []) if id["type"] == "ISBN_10"),
+                    "N/A"),
+                "isbn_13": next(
+                    (id["identifier"] for id in volume_info.get("industryIdentifiers", []) if id["type"] == "ISBN_13"),
+                    "N/A"),
+                "pageCount": volume_info.get("pageCount", "N/A"),
+                "language": volume_info.get("language", "N/A"),
+            }
+
+            return book_details
+        else:
+            print("No book found for the given ISBN.")
+            return None
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while fetching book details: {e}")
+        return None
 
 
 def get_available_cameras(max_devices=5):
@@ -33,7 +96,8 @@ def detect_barcode(frame):
             barcode_type = barcode.type
             text = f"{barcode_data} ({barcode_type})"
             cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            barcode_text.write(f"Detected Barcode: {text}")
+            book_details = get_book_details(barcode_data)
+            barcode_text.write(f"Detected Book: {book_details}")
     return frame
 
 
