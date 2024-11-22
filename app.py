@@ -1,6 +1,5 @@
 import cv2
 import streamlit as st
-import numpy as np
 from pyzbar.pyzbar import decode
 
 def get_available_cameras(max_devices=5):
@@ -12,9 +11,8 @@ def get_available_cameras(max_devices=5):
             cap.release()
     return available_cameras
 
-
 def main():
-    st.title("Simple WebRTC Stream with OpenCV and Streamlit")
+    st.title("Barcode Scanner with OpenCV and Streamlit")
 
     available_cameras = get_available_cameras()
     if not available_cameras:
@@ -27,18 +25,19 @@ def main():
     barcode_text = st.empty()
 
     if run:
-        # Initialize the video capture object
         cap = cv2.VideoCapture(camera_index)
 
         while run:
-            # Capture each frame of the video
             ret, frame = cap.read()
             if not ret:
                 st.error(f"Failed to capture image from camera {camera_index}.")
                 break
 
+            # Convert to grayscale for better barcode detection
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
             # Decode barcodes
-            barcodes = decode(frame)
+            barcodes = decode(gray)
             for barcode in barcodes:
                 (x, y, w, h) = barcode.rect
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -49,14 +48,15 @@ def main():
                 cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                 barcode_text.write(f"Detected Barcode: {text}")
 
-            # Convert the image color from BGR to RGB
+            # Convert to RGB for Streamlit display
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            # Displaying the frame using Streamlit
             FRAME_WINDOW.image(frame)
 
-        # Release the video capture object
-        cap.release()
+            # Allow Streamlit checkbox to exit loop
+            if not st.session_state.run_webcam:
+                break
 
+        cap.release()
 
 if __name__ == "__main__":
     main()
