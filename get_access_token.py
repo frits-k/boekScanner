@@ -50,7 +50,7 @@ if access_token:
     "category" : "NEW"
   },
   "reference" : "RefCode",
-  "onHoldByRetailer" : "true",
+  "onHoldByRetailer" : True,
   "unknownProductTitle" : "Title",
   "pricing" : {
     "bundlePrices" : [ {
@@ -66,7 +66,7 @@ if access_token:
   },
   "stock" : {
     "amount" : 1,
-    "managedByRetailer" : "false"
+    "managedByRetailer" : False
   },
   "fulfilment" : {
     "method" : "FBR",
@@ -77,15 +77,15 @@ if access_token:
     # Headers for the API request
     headers = {
         "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json",
-        "Accept": "application/vnd.retailer.v10+json"
+        "Content-Type": "application/vnd.retailer.v10+json",  # Use the specific media type expected by bol.com
+        "Accept": "application/vnd.retailer.v10+json"  # Match the API version
     }
 
     # Send the POST request to the demo API endpoint
     response = requests.post(url, json=payload, headers=headers)
 
     # Check the response
-    if response.status_code == 201:  # HTTP 201 Created
+    if response.status_code in (201, 202):  # HTTP 201 Created
         print("Offer successfully created in demo environment!")
         print("Response:", response.json())
     else:
