@@ -1,6 +1,10 @@
 import base64
 import requests
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Load client credentials from environment variables
 client_id = os.getenv("BOL_CLIENT_ID")
