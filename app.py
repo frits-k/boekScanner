@@ -163,7 +163,7 @@ def create_offer(client_id, client_secret, ean_code):
 bol_image = "https://media.licdn.com/dms/image/v2/C561BAQHOc6cmr7fNnw/company-background_10000/company-background_10000/0/1585427446497/bol_com_cover?e=1734451200&v=beta&t=M0KcxhqwUaBArc53ejJCfsfJaPU0OS9T_dubOQu47MY"
 st.image(bol_image)
 
-client_id = st.text_input("BOL CLIENT IT")
+client_id = st.text_input("BOL CLIENT ID")
 client_secret = st.text_input("BOL SECRET", type="password")
 action = st.selectbox("Wat wil je doen?", ["Boek plaatsen", "Prijzen ophalen"])
 
