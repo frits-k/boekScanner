@@ -44,10 +44,11 @@ else:
 if access_token:
     # Define the API endpoint for the demo environment
     url = "https://api.bol.com/retailer-demo/offers"
+    url = "https://api.bol.com/retailer/offers"
 
     # Payload for the API request
     payload = {
-  "ean" : "9780471117094",
+  "ean" : "9789056701680",
   "economicOperatorId" : "90bfddc5-a6d0-4986-9253-407b3a6850ca",
   "condition" : {
     "name" : "NEW",
@@ -59,14 +60,7 @@ if access_token:
   "pricing" : {
     "bundlePrices" : [ {
       "quantity" : 1,
-      "unitPrice" : 9.99
-    }, {
-      "quantity" : 6,
-      "unitPrice" : 8.99
-    }, {
-      "quantity" : 12,
-      "unitPrice" : 7.99
-    } ]
+      "unitPrice" : 55.99}]
   },
   "stock" : {
     "amount" : 1,
@@ -90,7 +84,7 @@ if access_token:
 
     # Check the response
     if response.status_code in (201, 202):  # HTTP 201 Created
-        print("Offer successfully created in demo environment!")
+        print("Offer successfully created!")
         print("Response:", response.json())
     else:
         print("Failed to create offer.")
